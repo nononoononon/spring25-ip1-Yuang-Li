@@ -8,8 +8,8 @@ import { SafeUser, User, UserCredentials, UserResponse } from '../types/types';
  * @returns {SafeUser} - A safe version of the user object that excludes the `password` field,
  */
 const toSafeUser = (u: User): SafeUser => {
-  const { _id, username, dateJoined } = u;
-  return { _id, username, dateJoined };
+  const { _id: id, username, dateJoined } = u;
+  return { _id: id, username, dateJoined };
 };
 
 const errorResp = (message: string): UserResponse => ({ error: message });
