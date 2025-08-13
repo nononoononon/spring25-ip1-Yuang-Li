@@ -1,5 +1,18 @@
 import UserModel from '../models/users.model';
-import { User, UserCredentials, UserResponse } from '../types/types';
+import { SafeUser, User, UserCredentials, UserResponse } from '../types/types';
+
+/**
+ * Converts a full User object into a SafeUser object by removing `password`.
+ *
+ * @param {User} u - The complete User object.
+ * @returns {SafeUser} - A safe version of the user object that excludes the `password` field,
+ */
+const toSafeUser = (u: User): SafeUser => {
+  const { _id, username, dateJoined } = u;
+  return { _id, username, dateJoined };
+};
+
+const errorResp = (message: string): UserResponse => ({ error: message });
 
 /**
  * Saves a new user to the database.
@@ -7,9 +20,24 @@ import { User, UserCredentials, UserResponse } from '../types/types';
  * @param {User} user - The user object to be saved, containing user details like username, password, etc.
  * @returns {Promise<UserResponse>} - Resolves with the saved user object (without the password) or an error message.
  */
-export const saveUser = async (user: User): Promise<UserResponse> =>
-  // TODO: Task 1 - Implement the saveUser function. Refer to other service files for guidance.
-  ({ error: 'Not implemented' });
+export const saveUser = async (user: User): Promise<UserResponse> => {
+  try {
+    const username = user?.username?.trim();
+    const password = user?.password?.trim();
+
+    const exists = await UserModel.findOne({ username }).lean<User | null>();
+    if (exists) return errorResp('Username already exists');
+
+    const newUser = await UserModel.create({
+      username,
+      password,
+      dateJoined: new Date(),
+    });
+    return toSafeUser(newUser.toObject() as User);
+  } catch (err) {
+    return { error: 'Failed to create user' };
+  }
+};
 
 /**
  * Retrieves a user from the database by their username.
