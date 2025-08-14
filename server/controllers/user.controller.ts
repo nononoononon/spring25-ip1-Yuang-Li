@@ -162,11 +162,11 @@ const userController = () => {
     }
   };
 
-  router.post('/users', createUser);
-  router.post('/users/login', userLogin);
-  router.get('/users/:username', getUser);
-  router.delete('/users/:username', deleteUser);
-  router.patch('/users/:username/password', resetPassword);
+  router.post('/', createUser);
+  router.post('/login', userLogin);
+  router.get('/:username', getUser);
+  router.delete('/:username', deleteUser);
+  router.patch('/:username/password', resetPassword);
   return router;
 };
 
