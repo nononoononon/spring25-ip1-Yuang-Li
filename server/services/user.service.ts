@@ -22,8 +22,8 @@ const errorResp = (message: string): UserResponse => ({ error: message });
  */
 export const saveUser = async (user: User): Promise<UserResponse> => {
   try {
-    const username = user?.username?.trim();
-    const password = user?.password?.trim();
+    const username = user?.username;
+    const password = user?.password;
 
     const exists = await UserModel.findOne({ username }).lean<User | null>();
     if (exists) return errorResp('Username already exists');
@@ -84,7 +84,7 @@ export const loginUser = async (loginCredentials: UserCredentials): Promise<User
  */
 export const deleteUserByUsername = async (username: string): Promise<UserResponse> => {
   try {
-    const u = username?.trim();
+    const u = username;
 
     const doc = await UserModel.findOneAndDelete({ username: u }).lean<User | null>();
     if (!doc) return errorResp('User not found');
@@ -107,11 +107,11 @@ export const updateUser = async (
   updates: Partial<User>,
 ): Promise<UserResponse> => {
   try {
-    const u = username?.trim();
+    const u = username;
 
     const patch: Partial<User> = {};
     if (typeof updates.password === 'string') patch.password = updates.password.trim();
-    if (typeof updates.username === 'string') patch.username = updates.username.trim();
+    // if (typeof updates.username === 'string') patch.username = updates.username.trim();
 
     const updated = (await UserModel.findOneAndUpdate(
       { username: u },

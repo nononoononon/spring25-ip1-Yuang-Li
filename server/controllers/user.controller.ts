@@ -16,8 +16,15 @@ const userController = () => {
    * @param req The incoming request containing user data.
    * @returns `true` if the body contains valid user fields; otherwise, `false`.
    */
-  const isUserBodyValid = (req: UserRequest): boolean => false;
-  // TODO: Task 1 - Implement the isUserBodyValid function
+  const isUserBodyValid = (req: UserRequest): boolean => {
+    const u = req?.body?.username;
+    const p = req?.body?.password;
+
+    const hasValidUsername = typeof u === 'string' && u.trim().length > 0;
+    const hasValidPassword = typeof p === 'string' && p.trim().length > 0;
+
+    return hasValidUsername && hasValidPassword;
+  };
 
   /**
    * Handles the creation of a new user account.
@@ -26,8 +33,26 @@ const userController = () => {
    * @returns A promise resolving to void.
    */
   const createUser = async (req: UserRequest, res: Response): Promise<void> => {
-    // TODO: Task 1 - Implement the createUser function
-    res.status(501).send('Not implemented');
+    try {
+      if (!isUserBodyValid(req)) {
+        res.status(400).json({ error: 'username and password are required' });
+        return;
+      }
+
+      const resp = await saveUser({
+        username: req.body.username.trim(),
+        password: req.body.password.trim(),
+        dateJoined: new Date(),
+      } as User);
+
+      if ('error' in resp) {
+        res.status(500).json(resp);
+        return;
+      }
+      res.status(201).json(resp);
+    } catch (err: unknown) {
+      res.status(500).send('Error when creating user');
+    }
   };
 
   /**
@@ -37,8 +62,25 @@ const userController = () => {
    * @returns A promise resolving to void.
    */
   const userLogin = async (req: UserRequest, res: Response): Promise<void> => {
-    // TODO: Task 1 - Implement the userLogin function
-    res.status(501).send('Not implemented');
+    try {
+      if (!isUserBodyValid(req)) {
+        res.status(400).json({ error: 'username and password are required' });
+        return;
+      }
+      const creds: UserCredentials = {
+        username: req.body.username.trim(),
+        password: req.body.password.trim(),
+      };
+
+      const resp = await loginUser(creds);
+      if ('error' in resp) {
+        res.status(500).json(resp);
+        return;
+      }
+      res.status(200).json(resp);
+    } catch (err: unknown) {
+      res.status(500).send('Error when logging in');
+    }
   };
 
   /**
@@ -48,8 +90,21 @@ const userController = () => {
    * @returns A promise resolving to void.
    */
   const getUser = async (req: UserByUsernameRequest, res: Response): Promise<void> => {
-    // TODO: Task 1 - Implement the getUser function
-    res.status(501).send('Not implemented');
+    try {
+      const uname = req?.body?.username;
+      if (!uname) {
+        res.status(400).send('Invalid username is required');
+      }
+
+      const resp = await getUserByUsername(uname);
+      if ('error' in resp) {
+        res.status(500).json(resp);
+        return;
+      }
+      res.status(200).json(resp);
+    } catch (err: unknown) {
+      res.status(500).send('Error when fetching user');
+    }
   };
 
   /**
@@ -59,8 +114,21 @@ const userController = () => {
    * @returns A promise resolving to void.
    */
   const deleteUser = async (req: UserByUsernameRequest, res: Response): Promise<void> => {
-    // TODO: Task 1 - Implement the deleteUser function
-    res.status(501).send('Not implemented');
+    try {
+      const uname = req?.body?.username;
+      if (!uname) {
+        res.status(400).send('Invalid username is required');
+      }
+
+      const resp = await deleteUserByUsername(uname);
+      if ('error' in resp) {
+        res.status(500).json(resp);
+        return;
+      }
+      res.status(200).json(resp);
+    } catch (err: unknown) {
+      res.status(500).send('Error when deleting user');
+    }
   };
 
   /**
@@ -70,13 +138,35 @@ const userController = () => {
    * @returns A promise resolving to void.
    */
   const resetPassword = async (req: UserRequest, res: Response): Promise<void> => {
-    // TODO: Task 1 - Implement the resetPassword function
-    res.status(501).send('Not implemented');
+    try {
+      const uname = req?.params?.username?.trim();
+      const newPwd = req?.body?.password?.trim();
+
+      if (!uname) {
+        res.status(400).json({ error: 'username is required' });
+        return;
+      }
+      if (!newPwd) {
+        res.status(400).json({ error: 'new password is required' });
+        return;
+      }
+
+      const resp = await updateUser(uname, { password: newPwd });
+      if ('error' in resp) {
+        res.status(500).json(resp);
+        return;
+      }
+      res.status(200).json(resp);
+    } catch (err: unknown) {
+      res.status(500).send('Error when resetting password');
+    }
   };
 
-  // Define routes for the user-related operations.
-  // TODO: Task 1 - Add appropriate HTTP verbs and endpoints to the router
-
+  router.post('/users', createUser);
+  router.post('/users/login', userLogin);
+  router.get('/users/:username', getUser);
+  router.delete('/users/:username', deleteUser);
+  router.patch('/users/:username/password', resetPassword);
   return router;
 };
 
