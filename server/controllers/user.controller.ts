@@ -35,7 +35,7 @@ const userController = () => {
   const createUser = async (req: UserRequest, res: Response): Promise<void> => {
     try {
       if (!isUserBodyValid(req)) {
-        res.status(400).json({ error: 'username and password are required' });
+        res.status(400).send('Invalid user body');
         return;
       }
 
@@ -49,7 +49,7 @@ const userController = () => {
         res.status(500).json(resp);
         return;
       }
-      res.status(201).json(resp);
+      res.status(200).json(resp);
     } catch (err: unknown) {
       res.status(500).send('Error when creating user');
     }
@@ -64,7 +64,7 @@ const userController = () => {
   const userLogin = async (req: UserRequest, res: Response): Promise<void> => {
     try {
       if (!isUserBodyValid(req)) {
-        res.status(400).json({ error: 'username and password are required' });
+        res.status(400).send('Invalid user body');
         return;
       }
       const creds: UserCredentials = {
@@ -91,9 +91,10 @@ const userController = () => {
    */
   const getUser = async (req: UserByUsernameRequest, res: Response): Promise<void> => {
     try {
-      const uname = req?.body?.username;
+      const uname = req?.params?.username?.trim();
       if (!uname) {
         res.status(400).send('Invalid username is required');
+        return;
       }
 
       const resp = await getUserByUsername(uname);
@@ -115,9 +116,10 @@ const userController = () => {
    */
   const deleteUser = async (req: UserByUsernameRequest, res: Response): Promise<void> => {
     try {
-      const uname = req?.body?.username;
+      const uname = req?.params?.username?.trim();
       if (!uname) {
-        res.status(400).send('Invalid username is required');
+        res.status(404).send('username not provided');
+        return;
       }
 
       const resp = await deleteUserByUsername(uname);
@@ -139,15 +141,15 @@ const userController = () => {
    */
   const resetPassword = async (req: UserRequest, res: Response): Promise<void> => {
     try {
-      const uname = req?.params?.username?.trim();
+      const uname = req?.body?.username?.trim();
       const newPwd = req?.body?.password?.trim();
 
       if (!uname) {
-        res.status(400).json({ error: 'username is required' });
+        res.status(400).send('Invalid user body');
         return;
       }
       if (!newPwd) {
-        res.status(400).json({ error: 'new password is required' });
+        res.status(400).send('new password is required');
         return;
       }
 
@@ -162,11 +164,11 @@ const userController = () => {
     }
   };
 
-  router.post('/', createUser);
+  router.post('/signup', createUser);
   router.post('/login', userLogin);
-  router.get('/:username', getUser);
-  router.delete('/:username', deleteUser);
-  router.patch('/:username/password', resetPassword);
+  router.get('/getUser/:username', getUser);
+  router.delete('/deleteUser/:username', deleteUser);
+  router.patch('/resetPassword', resetPassword);
   return router;
 };
 

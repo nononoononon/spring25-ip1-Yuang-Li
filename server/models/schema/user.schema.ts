@@ -13,7 +13,7 @@ const userSchema: Schema = new Schema(
   {
     username: { type: String, unique: true, required: true },
     password: { type: String, required: true },
-    dataJoined: { type: Date, default: Date.now, required: true },
+    dateJoined: { type: Date, default: Date.now, required: true },
   },
   { collection: 'User' },
 );

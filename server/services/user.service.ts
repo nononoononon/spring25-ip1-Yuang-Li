@@ -31,7 +31,7 @@ export const saveUser = async (user: User): Promise<UserResponse> => {
     const newUser = await UserModel.create({
       username,
       password,
-      dateJoined: new Date(),
+      dateJoined: user?.dateJoined ?? new Date(),
     });
     return toSafeUser(newUser.toObject() as User);
   } catch (err) {
@@ -67,8 +67,8 @@ export const loginUser = async (loginCredentials: UserCredentials): Promise<User
     const username = loginCredentials?.username?.trim();
     const password = loginCredentials?.password?.trim();
 
-    const doc = await UserModel.findOne({ username }).lean<User | null>();
-    if (!doc || doc.password !== password) return errorResp('Invalid credentials');
+    const doc = await UserModel.findOne({ username, password }).lean<User | null>();
+    if (!doc) return errorResp('Invalid credentials');
 
     return toSafeUser(doc);
   } catch (err) {
