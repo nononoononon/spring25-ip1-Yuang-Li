@@ -33,7 +33,11 @@ describe('Message model', () => {
 
       expect(savedMessage).toMatchObject(message1);
     });
-    // TODO: Task 2 - Write a test case for saveMessage when an error occurs
+    // test case for saveMessage when an error occurs
+    it('should return errorResp when msg or msgFrom is missing', async () => {
+      const result = await saveMessage({ msg: '', msgFrom: 'User1' } as never);
+      expect(result).toEqual({ error: 'Invalid message body' });
+    });
   });
 
   describe('getMessages', () => {
@@ -44,6 +48,19 @@ describe('Message model', () => {
 
       expect(messages).toMatchObject([message1, message2]);
     });
-    // TODO: Task 2 - Write a test case for getMessages when an error occurs
+    //  test case for getMessages when an error occurs
+    it('should return empty array on error', async () => {
+      mockingoose(MessageModel).toReturn(new Error('DB error'), 'find');
+
+      const result = await getMessages();
+      expect(result).toEqual([]);
+    });
+
+    it('should return an empty array when no messages exist', async () => {
+      mockingoose(MessageModel).toReturn([], 'find');
+
+      const result = await getMessages();
+      expect(result).toEqual([]);
+    });
   });
 });
