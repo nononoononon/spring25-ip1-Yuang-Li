@@ -162,7 +162,23 @@ describe('deleteUserByUsername', () => {
     expect(deletedUser.dateJoined).toEqual(user.dateJoined);
   });
 
-  // TODO: Task 1 - Write additional test cases for deleteUserByUsername
+  //  additional test cases for deleteUserByUsername
+  it('should return error when user is not found', async () => {
+    mockingoose(UserModel).toReturn(null, 'findOneAndDelete');
+
+    const resp = await deleteUserByUsername('nope');
+    expect(resp).toEqual({ error: 'User not found' });
+  });
+
+  it('should treat blank username as not found', async () => {
+    mockingoose(UserModel).toReturn(null, 'findOneAndDelete');
+
+    const resp1 = await deleteUserByUsername('');
+    expect(resp1).toEqual({ error: 'User not found' });
+
+    const resp2 = await deleteUserByUsername('    ');
+    expect(resp2).toEqual({ error: 'User not found' });
+  });
 });
 
 describe('updateUser', () => {
@@ -195,5 +211,23 @@ describe('updateUser', () => {
     expect(result.dateJoined).toEqual(updatedUser.dateJoined);
   });
 
-  // TODO: Task 1 - Write additional test cases for updateUser
+  // additional test cases for updateUser
+  it('updates password successfully and returns SafeUser', async () => {
+    const updatedDoc: User = { ...user, password: 'newPassword' };
+    mockingoose(UserModel).toReturn(updatedDoc, 'findOneAndUpdate');
+
+    const resp = (await updateUser('user1', { password: 'newPassword' })) as SafeUser;
+
+    expect('error' in resp).toBe(false);
+    expect(resp.username).toBe('user1');
+    expect(resp.dateJoined.toISOString()).toBe('2024-12-03T00:00:00.000Z');
+    expect('password' in resp).toBe(false);
+  });
+
+  it('returns error when user is not found', async () => {
+    mockingoose(UserModel).toReturn(null, 'findOneAndUpdate');
+
+    const resp = await updateUser('user1', { password: 'newPassword' });
+    expect(resp).toEqual({ error: 'User not found' });
+  });
 });
