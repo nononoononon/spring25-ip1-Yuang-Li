@@ -39,6 +39,71 @@ describe('POST /addMessage', () => {
   });
 
   // TODO: Task 2 - Write additional test cases for addMessageRoute
+  it('should return 400 if msg is blank', async () => {
+    // blank msg
+    const resp = await supertest(app)
+      .post('/messaging/addMessage')
+      .send({
+        messageToAdd: { msg: '   ', msgFrom: 'User1', msgDateTime: new Date('2024-06-04') },
+      });
+    expect(resp.status).toBe(400);
+    expect(resp.text).toBe('Invalid message body');
+  });
+
+  it('should return 400 if msgFrom is missing or blank', async () => {
+    // missing msgFrom
+    let resp = await supertest(app)
+      .post('/messaging/addMessage')
+      .send({ messageToAdd: { msg: 'Hello', msgDateTime: new Date('2024-06-04') } });
+    expect(resp.status).toBe(400);
+    expect(resp.text).toBe('Invalid message body');
+
+    // blank msgFrom
+    resp = await supertest(app)
+      .post('/messaging/addMessage')
+      .send({
+        messageToAdd: { msg: 'Hello', msgFrom: '   ', msgDateTime: new Date('2024-06-04') },
+      });
+    expect(resp.status).toBe(400);
+    expect(resp.text).toBe('Invalid message body');
+  });
+
+  it('should default msgDateTime to current time if not provided', async () => {
+    saveMessageSpy.mockResolvedValue({
+      msg: 'Hello',
+      msgFrom: 'User1',
+      msgDateTime: new Date('2024-06-04'),
+      _id: new mongoose.Types.ObjectId(),
+    });
+
+    const before = new Date();
+    const resp = await supertest(app)
+      .post('/messaging/addMessage')
+      .send({ messageToAdd: { msg: 'Hello', msgFrom: 'User1' } }); // no date
+    const after = new Date();
+
+    expect(resp.status).toBe(200);
+    const calledArg = saveMessageSpy.mock.calls[0][0] as {
+      msgDateTime: Date;
+      msg: string;
+      msgFrom: string;
+    };
+    expect(calledArg.msgDateTime.getTime()).toBeGreaterThanOrEqual(before.getTime());
+    expect(calledArg.msgDateTime.getTime()).toBeLessThanOrEqual(after.getTime());
+  });
+
+  it('should return 500 with error body when service returns an error object', async () => {
+    saveMessageSpy.mockResolvedValue({ error: 'Failed to save message' });
+
+    const resp = await supertest(app)
+      .post('/messaging/addMessage')
+      .send({
+        messageToAdd: { msg: 'Hello', msgFrom: 'User1', msgDateTime: new Date('2024-06-04') },
+      });
+
+    expect(resp.status).toBe(500);
+    expect(resp.body).toEqual({ error: 'Failed to save message' });
+  });
 });
 
 describe('GET /getMessages', () => {

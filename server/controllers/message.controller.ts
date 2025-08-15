@@ -13,8 +13,12 @@ const messageController = (socket: FakeSOSocket) => {
    *
    * @returns `true` if the request is valid, otherwise `false`.
    */
-  const isRequestValid = (req: AddMessageRequest): boolean => false;
-  // TODO: Task 2 - Implement the isRequestValid function
+  const isRequestValid = (req: AddMessageRequest): boolean => {
+    const m = req?.body?.messageToAdd;
+    const hasValidMsg = typeof m?.msg === 'string' && m.msg.trim().length > 0;
+    const hasValidMsgFrom = typeof m?.msgFrom === 'string' && m.msgFrom.trim().length > 0;
+    return hasValidMsg && hasValidMsgFrom;
+  };
 
   /**
    * Validates the Message object to ensure it contains the required fields.
@@ -23,8 +27,11 @@ const messageController = (socket: FakeSOSocket) => {
    *
    * @returns `true` if the message is valid, otherwise `false`.
    */
-  const isMessageValid = (message: Message): boolean => false;
-  // TODO: Task 2 - Implement the isMessageValid function
+  const isMessageValid = (message: Message): boolean => {
+    const hasMsg = typeof message?.msg === 'string' && message.msg.trim().length > 0;
+    const hasFrom = typeof message?.msgFrom === 'string' && message.msgFrom.trim().length > 0;
+    return hasMsg && hasFrom;
+  };
 
   /**
    * Handles adding a new message. The message is first validated and then saved.
@@ -36,13 +43,38 @@ const messageController = (socket: FakeSOSocket) => {
    * @returns A Promise that resolves to void.
    */
   const addMessageRoute = async (req: AddMessageRequest, res: Response): Promise<void> => {
-    /**
-     * TODO: Task 2 - Implement the addMessageRoute function.
-     * Note: you will need to uncomment the line below. Refer to other controller files for guidance.
-     * This emits a message update event to the client. When should you emit this event? You can find the socket event definition in the server/types/socket.d.ts file.
-     */
-    // socket.emit('messageUpdate', { msg: msgFromDb });
-    res.status(501).send('Not implemented');
+    try {
+      if (!req?.body?.messageToAdd) {
+        res.status(400).send('Invalid request');
+        return;
+      }
+      const incoming = req.body.messageToAdd;
+
+      const normalized: Message = {
+        msg: incoming.msg?.toString().trim(),
+        msgFrom: incoming.msgFrom?.toString().trim(),
+        msgDateTime: incoming.msgDateTime ? new Date(incoming.msgDateTime) : new Date(),
+        _id: incoming._id,
+      };
+
+      if (!isMessageValid(normalized)) {
+        res.status(400).send('Invalid message body');
+        return;
+      }
+
+      const resp = await saveMessage(normalized);
+      if ('error' in resp) {
+        res.status(500).json(resp);
+        return;
+      }
+
+      // send to client
+      socket.emit('messageUpdate', { msg: resp });
+
+      res.status(200).json(resp);
+    } catch {
+      res.status(500).send('Error when adding message');
+    }
   };
 
   /**
@@ -52,8 +84,12 @@ const messageController = (socket: FakeSOSocket) => {
    * @returns A Promise that resolves to void.
    */
   const getMessagesRoute = async (req: Request, res: Response): Promise<void> => {
-    // TODO: Task 2 - Implement the getMessagesRoute function
-    res.status(501).send('Not implemented');
+    try {
+      const list = await getMessages();
+      res.status(200).json(list);
+    } catch {
+      res.status(500).send('Error when fetching messages');
+    }
   };
 
   // Add appropriate HTTP verbs and their endpoints to the router
