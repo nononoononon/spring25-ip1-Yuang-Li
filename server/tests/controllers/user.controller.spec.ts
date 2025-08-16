@@ -190,13 +190,12 @@ describe('Test userController', () => {
     it('should return 500 when service returns error', async () => {
       updatedUserSpy.mockResolvedValueOnce({ error: 'User not found' });
       const response = await supertest(app)
-          .patch('/user/resetPassword')
-          .send({ username: 'user1', password: 'new' });
+        .patch('/user/resetPassword')
+        .send({ username: 'user1', password: 'new' });
 
       expect(response.status).toBe(500);
       expect(response.body).toEqual({ error: 'User not found' });
     });
-
   });
 
   describe('GET /getUser', () => {
@@ -249,7 +248,6 @@ describe('Test userController', () => {
       const response = await supertest(app).delete('/user/deleteUser/');
       expect(response.status).toBe(404);
     });
-
 
     // additional test cases for deleteUserRoute
     it('should return 400 when username is only spaces', async () => {
